@@ -7,21 +7,21 @@ const E: f32 = std::f32::consts::E;
 
 type Rna = Vec<Directions>;
 
-#[derive(Clone)]
-struct Gene {
+#[derive(Clone,Debug)]
+pub struct Gene {
   rna: Rna,
   fitness: f32,
 }
 
 impl Gene {
-  fn new() -> Gene {
+  pub fn new() -> Gene {
     Gene {
       rna: generate_genes_rna(),
       fitness: 0f32,
     }
   }
 
-  fn fitness_evaluator(self, lab: Vec<Vec<String>>, entrance: Point) -> Self {
+  pub fn fitness_evaluator(self, lab: Vec<Vec<String>>, entrance: Point) -> Self {
     let path = movement(lab, entrance, self.rna.clone());
     let values = path.iter()
       .map(|rna| match &rna[..] {
@@ -55,7 +55,7 @@ impl Gene {
       .fold(0f32,|acc, v| acc + v) + exit_bonus
   }
 
-pub fn generate_genes_rna() -> Rna{
+fn generate_genes_rna() -> Rna{
     let mut rng = rand::thread_rng();
     let size = rng.gen_range(2, 12);
     (0..size).map(|_| random_direction()).collect::<Rna>()
@@ -64,6 +64,7 @@ pub fn generate_genes_rna() -> Rna{
 #[cfg(test)]
 mod test {
   use super::{generate_genes_rna, Rna, Gene, fitness, fitness_calculator};
+  use super::super::directions::{Directions,Point};
 
   fn gene_in_range(genes: Rna) {
     assert!(genes.len() >= 2);
@@ -75,6 +76,13 @@ mod test {
     let gene = Gene::new();
     assert_eq!(0f32, gene.fitness);
     assert!(gene.rna.len() >= 2);
+  }
+
+  #[test]
+  fn evaluate_fitness_from_gene() {
+    let gene = Gene {rna: vec![Directions::E, Directions::S, Directions::S] ,fitness: 0f32};
+    let actual = gene.fitness_evaluator(vec![vec!["E".to_string(), "0".to_string(), "1".to_string()], vec!["1".to_string(), "0".to_string(), "0".to_string()], vec!["1".to_string(), "S".to_string(), "1".to_string()]], Point::from(0i32, 0i32));
+    assert!(actual.fitness > 10f32);
   }
 
   #[test]

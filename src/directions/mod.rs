@@ -36,18 +36,18 @@ pub enum Directions {
 }
 
 impl Distribution<Directions> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Directions {
-        match rng.gen_range(0, 8) {
-          0  => Directions::N,
-          1  => Directions::S,
-          2  => Directions::W,
-          3  => Directions::E,
-          4  => Directions::NE,
-          5  => Directions::NW,
-          6  => Directions::SE,
-          _  => Directions::SW,
-        }
+  fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Directions {
+    match rng.gen_range(0, 8) {
+      0  => Directions::N,
+      1  => Directions::S,
+      2  => Directions::W,
+      3  => Directions::E,
+      4  => Directions::NE,
+      5  => Directions::NW,
+      6  => Directions::SE,
+      _  => Directions::SW,
     }
+  }
 }
 
 pub fn random_direction() -> Directions {
@@ -88,6 +88,7 @@ mod test {
   use super::{Directions,direction_to_position, movement, Point, random_direction};
   use super::super::labreader::read_lab;
 
+  #[allow(unreachable_patterns)]
   fn is_dir(dir: Directions) -> bool {
     match dir {
       Directions::N => true,

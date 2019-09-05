@@ -1,6 +1,7 @@
 mod labreader;
 mod directions;
 mod genes;
+mod population;
 
 use std::io::{self};
 use labreader::{read_lab, find_e};

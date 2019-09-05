@@ -21,6 +21,20 @@ impl Gene {
     }
   }
 
+  pub fn mutate_gene(self, mutation_rate: f32) -> Self {
+    let mut rng = rand::thread_rng();
+    let rnd_index = rng.gen_range(0, self.rna.clone().len());
+    let generated_percentile = rng.gen_range(0f32, 1f32);
+    if mutation_rate > generated_percentile {
+      let mut mut_rna = self.rna;
+      mut_rna.remove(rnd_index);
+      mut_rna.insert(rnd_index, random_direction());
+      Self{rna: mut_rna, fitness: 0f32}
+    } else {
+      self
+    }
+  }
+
   pub fn fitness_evaluator(self, lab: Vec<Vec<String>>, entrance: Point) -> Self {
     let path = movement(lab, entrance, self.rna.clone());
     let values = path.iter()
@@ -55,7 +69,7 @@ impl Gene {
       .fold(0f32,|acc, v| acc + v) + exit_bonus
   }
 
-fn generate_genes_rna() -> Rna{
+fn generate_genes_rna() -> Rna {
     let mut rng = rand::thread_rng();
     let size = rng.gen_range(2, 12);
     (0..size).map(|_| random_direction()).collect::<Rna>()
@@ -112,5 +126,17 @@ mod test {
     gene_in_range(generate_genes_rna());
     gene_in_range(generate_genes_rna());
     gene_in_range(generate_genes_rna());
+  }
+
+  #[test]
+  fn mutation_when_110percent() {
+    let gene = Gene::new();
+    assert!(gene.clone().mutate_gene(1.1f32).rna != gene.rna);  
+  }
+
+  #[test]
+  fn mutation_when_0percent() {
+    let gene = Gene::new();
+    assert_eq!(gene.clone().mutate_gene(-0.1f32).rna, gene.rna);  
   }
 }

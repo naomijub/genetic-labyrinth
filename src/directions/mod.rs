@@ -23,6 +23,7 @@ impl Point {
   }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Directions {
     N,
     S,

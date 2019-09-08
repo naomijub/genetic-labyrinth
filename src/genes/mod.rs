@@ -7,7 +7,7 @@ const E: f32 = std::f32::consts::E;
 
 type Rna = Vec<Directions>;
 
-#[derive(Clone,Debug)]
+#[derive(Clone,Debug, PartialEq)]
 pub struct Gene {
   rna: Rna,
   fitness: f32,
@@ -29,6 +29,22 @@ impl Gene {
       let mut mut_rna = self.rna;
       mut_rna.remove(rnd_index);
       mut_rna.insert(rnd_index, random_direction());
+      Self{rna: mut_rna, fitness: 0f32}
+    } else {
+      self
+    }
+  }
+
+  pub fn mutate_rna(self, mutation_rate: f32) -> Self {
+    let mut rng = rand::thread_rng();
+    let generated_percentile = rng.gen_range(0f32, 1f32);
+    if mutation_rate > generated_percentile {
+      let mut mut_rna = self.rna;
+      mut_rna.pop();
+      Self{rna: mut_rna, fitness: 0f32}
+    } else if 1f32 - mutation_rate < generated_percentile {
+      let mut mut_rna = self.rna;
+      mut_rna.push(random_direction());
       Self{rna: mut_rna, fitness: 0f32}
     } else {
       self
@@ -135,8 +151,20 @@ mod test {
   }
 
   #[test]
-  fn mutation_when_0percent() {
+  fn no_mutation_when_0percent() {
     let gene = Gene::new();
     assert_eq!(gene.clone().mutate_gene(-0.1f32).rna, gene.rna);  
+  }
+
+  #[test]
+  fn mutation_rna_size_when_100percent() {
+    let gene = Gene::new();
+    assert!(gene.clone().mutate_rna(1f32).rna.len() != gene.rna.len());  
+  }
+
+  #[test]
+  fn no_mutation_rna_size_when_0percent() {
+    let gene = Gene::new();
+    assert_eq!(gene.clone().mutate_rna(-0.1f32).rna.len(), gene.rna.len());  
   }
 }

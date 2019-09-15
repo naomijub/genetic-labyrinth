@@ -7,10 +7,10 @@ const E: f32 = std::f32::consts::E;
 
 type Rna = Vec<Directions>;
 
-#[derive(Clone,Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Gene {
-  rna: Rna,
-  fitness: f32,
+  pub rna: Rna,
+  pub fitness: f32,
 }
 
 impl Gene {

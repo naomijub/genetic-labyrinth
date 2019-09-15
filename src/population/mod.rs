@@ -4,16 +4,16 @@ use rand::seq::SliceRandom;
 use super::genes::Gene;
 use super::directions::Point;
 
-#[derive(Clone, PartialEq)]
-struct Population {
-  genes: Vec<Gene>,
-  mutation_rate: f32,
+#[derive(Clone, Debug, PartialEq)]
+pub struct Population {
+  pub genes: Vec<Gene>,
+  mutation_rate: f64,
   entrance: Point,
   lab: Vec<Vec<String>>
 }
 
 impl Population {
-  pub fn new(mutation_rate: f32, entrance: Point, lab: Vec<Vec<String>>) -> Self {
+  pub fn new(mutation_rate: f64, entrance: Point, lab: Vec<Vec<String>>) -> Self {
     let genes = (0..20).map(|_| Gene::new().fitness_evaluator(lab.clone(), entrance.clone())).collect::<Vec<Gene>>();
     
     Population {
@@ -47,14 +47,18 @@ impl Population {
 }
 
 fn crossover_genes(gene1: Gene, gene2: Gene) -> Gene {
-  let mut rna1 = gene1.clone().rna.split_at((gene1.clone().rna.len() as f32 / 2f32).ceil() as usize).0.to_vec();
-  let rna2 = gene2.clone().rna.split_at((gene2.rna.len() as f32 / 2f32).floor() as usize).1.to_vec();
+  if gene1 != gene2 {
+    let mut rna1 = gene1.clone().rna.split_at((gene1.clone().rna.len() as f64 / 2f64).ceil() as usize).0.to_vec();
+    let rna2 = gene2.clone().rna.split_at((gene2.rna.len() as f64 / 2f64).floor() as usize).1.to_vec();
 
-  rna1.extend(rna2);
+    rna1.extend(rna2);
 
-  Gene {
-    fitness: 0f32,
-    rna: rna1
+    Gene {
+      fitness: 0f64,
+      rna: rna1
+    }
+  } else {
+    vec![gene1, gene2].into_iter().max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap()).unwrap()
   }
 }
 
@@ -75,16 +79,26 @@ fn get_best(selected_genes: &Vec<&Gene>) -> Gene {
     .to_owned()
 }
 
+pub fn best_gene(genes: &Vec<Gene>) -> Gene {
+  genes
+    .into_iter()
+    .max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap())
+    .unwrap()
+    .clone()
+    .to_owned()
+}
+
 #[cfg(test)]
 mod test {
-  use super::{Population, crossover_genes, select_best, get_best};
+  use super::{Population, crossover_genes, select_best, get_best, best_gene};
   use super::super::directions::{Point,Directions};
   use super::super::genes::{Gene};
   use super::super::labreader::read_lab;
 
+  // Main population functions
   #[test]
   fn new_is_created_with_20_genes() {
-    let pop = Population::new(0.05f32, Point::from(1, 2), vec![vec!["1".to_string()], vec!["1".to_string()], vec!["1".to_string()]]);
+    let pop = Population::new(0.05f64, Point::from(1, 2), vec![vec!["1".to_string()], vec!["1".to_string()], vec!["1".to_string()]]);
     assert_eq!(pop.clone().genes.len(), 20);
     assert_eq!(pop.clone().entrance, Point::from(1, 2));
     assert_eq!(pop.clone().lab.len(), 3);
@@ -92,41 +106,53 @@ mod test {
 
   #[test]
   fn population_has_mutated_for_50percent() {
-    let pop = Population::new(0.5f32, Point::from(0, 0), read_lab());
+    let pop = Population::new(0.5f64, Point::from(0, 0), read_lab());
     let mutated_pop = pop.clone().mutate_pop();
     assert!(pop.genes != mutated_pop.genes);
   }
 
   #[test]
   fn population_has_crossed_over() {
-    let pop = Population::new(0.5f32, Point::from(0, 0), read_lab());
+    let pop = Population::new(0.5f64, Point::from(0, 0), read_lab());
     let crossedover_pop = pop.clone().crossing_over();
     assert!(pop.genes != crossedover_pop.genes);
   }
 
   #[test]
+  fn best_gene_in_vec() {
+    let gene1 = Gene{fitness: 10f64, rna: vec![Directions::N]};
+    let gene2 = Gene{fitness: -100f64, rna: vec![Directions::W]};
+    let gene3 = Gene{fitness: -10f64, rna: vec![Directions::S]};
+
+    let genes = vec![gene1.clone(), gene2, gene3];
+
+    assert_eq!(best_gene(&genes), gene1);
+  }
+
+  // Aux functions for crossing over
+  #[test]
   fn select_a_result_from_3_vector() {
-    let pop = Population::new(0.5f32, Point::from(0, 0), read_lab());
+    let pop = Population::new(0.5f64, Point::from(0, 0), read_lab());
     let selected_gene = select_best(&pop.clone().genes);
-    assert!(selected_gene.fitness > -100.0f32);
+    assert!(selected_gene.fitness > -100.0f64);
   }
 
    #[test]
   fn get_best_result_from_3_vector() {
-    let gene1 = Gene{fitness: 10f32, rna: vec![Directions::N]};
-    let gene2 = Gene{fitness: -100f32, rna: vec![Directions::W]};
-    let gene3 = Gene{fitness: -10f32, rna: vec![Directions::S]};
+    let gene1 = Gene{fitness: 10f64, rna: vec![Directions::N]};
+    let gene2 = Gene{fitness: -100f64, rna: vec![Directions::W]};
+    let gene3 = Gene{fitness: -10f64, rna: vec![Directions::S]};
 
     let genes = vec![&gene1, &gene2, &gene3];
 
     let selected_best = get_best(&genes);
-    assert_eq!(selected_best.fitness, 10f32);
+    assert_eq!(selected_best.fitness, 10f64);
   }
 
   #[test]
   fn crossing_over_for_two_even_genes() {
-    let gene1 = Gene{fitness: 10f32, rna: vec![Directions::N, Directions::W, Directions::S, Directions::N, Directions::E, Directions::S]};
-    let gene2 = Gene{fitness: 10f32, rna: vec![Directions::W, Directions::NW, Directions::NE, Directions::N, Directions::SW, Directions::W, Directions::N, Directions::SE]};
+    let gene1 = Gene{fitness: 10f64, rna: vec![Directions::N, Directions::W, Directions::S, Directions::N, Directions::E, Directions::S]};
+    let gene2 = Gene{fitness: 10f64, rna: vec![Directions::W, Directions::NW, Directions::NE, Directions::N, Directions::SW, Directions::W, Directions::N, Directions::SE]};
     
     let actual_gene = crossover_genes(gene1, gene2);
     let expected_rna = vec![Directions::N, Directions::W, Directions::S, Directions::SW, Directions::W, Directions::N, Directions::SE];
@@ -136,8 +162,8 @@ mod test {
 
   #[test]
   fn crossing_over_for_two_odd_genes() {
-    let gene1 = Gene{fitness: 10f32, rna: vec![Directions::N, Directions::W, Directions::S, Directions::N, Directions::E]};
-    let gene2 = Gene{fitness: 10f32, rna: vec![Directions::NW, Directions::NE, Directions::N, Directions::SW, Directions::W, Directions::N, Directions::SE]};
+    let gene1 = Gene{fitness: 10f64, rna: vec![Directions::N, Directions::W, Directions::S, Directions::N, Directions::E]};
+    let gene2 = Gene{fitness: 10f64, rna: vec![Directions::NW, Directions::NE, Directions::N, Directions::SW, Directions::W, Directions::N, Directions::SE]};
     
     let actual_gene = crossover_genes(gene1, gene2);
     let expected_rna = vec![Directions::N, Directions::W, Directions::S, Directions::SW, Directions::W, Directions::N, Directions::SE];
@@ -147,8 +173,8 @@ mod test {
 
   #[test]
   fn crossing_over_for_one_even_one_odd_genes() {
-    let gene1 = Gene{fitness: 10f32, rna: vec![Directions::N, Directions::W, Directions::S, Directions::N, Directions::E, Directions::S]};
-    let gene2 = Gene{fitness: 10f32, rna: vec![Directions::NW, Directions::NE, Directions::N, Directions::SW, Directions::W, Directions::N, Directions::SE]};
+    let gene1 = Gene{fitness: 10f64, rna: vec![Directions::N, Directions::W, Directions::S, Directions::N, Directions::E, Directions::S]};
+    let gene2 = Gene{fitness: 10f64, rna: vec![Directions::NW, Directions::NE, Directions::N, Directions::SW, Directions::W, Directions::N, Directions::SE]};
     
     let actual_gene = crossover_genes(gene1, gene2);
     let expected_rna = vec![Directions::N, Directions::W, Directions::S, Directions::SW, Directions::W, Directions::N, Directions::SE];

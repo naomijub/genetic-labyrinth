@@ -3,49 +3,49 @@ extern crate rand;
 use rand::Rng;
 use super::directions::{Directions,random_direction, Point, movement};
 
-const E: f32 = std::f32::consts::E;
+const E: f64 = std::f64::consts::E;
 
 type Rna = Vec<Directions>;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Gene {
   pub rna: Rna,
-  pub fitness: f32,
+  pub fitness: f64,
 }
 
 impl Gene {
   pub fn new() -> Gene {
     Gene {
       rna: generate_genes_rna(),
-      fitness: 0f32,
+      fitness: 0f64,
     }
   }
 
-  pub fn mutate_gene(self, mutation_rate: f32) -> Self {
+  pub fn mutate_gene(self, mutation_rate: f64) -> Self {
     let mut rng = rand::thread_rng();
     let rnd_index = rng.gen_range(0, self.rna.clone().len());
-    let generated_percentile = rng.gen_range(0f32, 1f32);
+    let generated_percentile = rng.gen_range(0f64, 1f64);
     if mutation_rate > generated_percentile {
       let mut mut_rna = self.rna;
       mut_rna.remove(rnd_index);
       mut_rna.insert(rnd_index, random_direction());
-      Self{rna: mut_rna, fitness: 0f32}
+      Self{rna: mut_rna, fitness: 0f64}
     } else {
       self
     }
   }
 
-  pub fn mutate_rna(self, mutation_rate: f32) -> Self {
+  pub fn mutate_rna(self, mutation_rate: f64) -> Self {
     let mut rng = rand::thread_rng();
-    let generated_percentile = rng.gen_range(0f32, 1f32);
+    let generated_percentile = rng.gen_range(0f64, 1f64);
     if mutation_rate > generated_percentile {
       let mut mut_rna = self.rna;
       mut_rna.pop();
-      Self{rna: mut_rna, fitness: 0f32}
-    } else if 1f32 - mutation_rate < generated_percentile {
+      Self{rna: mut_rna, fitness: 0f64}
+    } else if 1f64 - mutation_rate < generated_percentile {
       let mut mut_rna = self.rna;
       mut_rna.push(random_direction());
-      Self{rna: mut_rna, fitness: 0f32}
+      Self{rna: mut_rna, fitness: 0f64}
     } else {
       self
     }
@@ -72,17 +72,17 @@ impl Gene {
   }
 }
 
- fn fitness_calculator(value: i32) -> f32 {
-   let x = value as f32;
-    3f32 * ((E.powf(x - 0.5f32) - 1f32)/(E.powf(x - 0.5f32) + 1f32) 
-      * (E.powf(x + 0.5f32) - 1f32)/(E.powf(x + 0.5f32) + 1f32) * (-20f32)).tanh() - 2f32
+ fn fitness_calculator(value: i32) -> f64 {
+   let x = value as f64;
+    4f64 * ((E.powf(x - 0.5f64) - 1f64)/(E.powf(x - 0.5f64) + 1f64) 
+      * (E.powf(x + 0.5f64) - 1f64)/(E.powf(x + 0.5f64) + 1f64) * (-20f64)).tanh() - 3f64
   }
   
-  fn fitness(values: Vec<i32>, has_found_exit: bool) -> f32 {
-    let exit_bonus = if has_found_exit { 10f32 } else { -1f32 };
-    values.into_iter()
+  fn fitness(values: Vec<i32>, has_found_exit: bool) -> f64 {
+    let exit_bonus = if has_found_exit { 10f64 } else { -5f64 };
+    values.clone().into_iter()
       .map(|v| fitness_calculator(v))
-      .fold(0f32,|acc, v| acc + v) + exit_bonus
+      .fold(0f64,|acc, v| acc + v) + exit_bonus - ((values.len() * 15usize) as f64).ln()
   }
 
 fn generate_genes_rna() -> Rna {
@@ -104,32 +104,32 @@ mod test {
   #[test]
   fn gene_is_created_with_fitness_0() {
     let gene = Gene::new();
-    assert_eq!(0f32, gene.fitness);
+    assert_eq!(0f64, gene.fitness);
     assert!(gene.rna.len() >= 2);
   }
 
   #[test]
   fn evaluate_fitness_from_gene() {
-    let gene = Gene {rna: vec![Directions::E, Directions::S, Directions::S] ,fitness: 0f32};
+    let gene = Gene {rna: vec![Directions::E, Directions::S, Directions::S] ,fitness: 0f64};
     let actual = gene.fitness_evaluator(vec![vec!["E".to_string(), "0".to_string(), "1".to_string()], vec!["1".to_string(), "0".to_string(), "0".to_string()], vec!["1".to_string(), "S".to_string(), "1".to_string()]], Point::from(0i32, 0i32));
-    assert!(actual.fitness > 10f32);
+    assert!(actual.fitness > 10f64);
   }
 
   #[test]
   fn test_fitness_value_spectrum() {
-    assert!(-3f32 > fitness_calculator(-1));
-    assert!(-3f32 > fitness_calculator(1));
-    assert!(0.5f32 < fitness_calculator(0));
+    assert!(-3f64 > fitness_calculator(-1));
+    assert!(-3f64 > fitness_calculator(1));
+    assert!(0.5f64 < fitness_calculator(0));
   }
 
   #[test]
   fn test_fitness_from_genes_without_exit() {
-    assert!(-15f32 > fitness(vec![-1, 1, 0, 0, 1, 1, 0], false));
+    assert!(-15f64 > fitness(vec![-1, 1, 0, 0, 1, 1, 0], false));
   }
 
   #[test]
   fn test_fitness_from_genes_with_exit() {
-    assert!(-10f32 < fitness(vec![-1, 1, 0, 0, 1, 1, 0], true));
+    assert!(-10f64 < fitness(vec![-1, 1, 0, 0, 1, 1, 0], true));
   }
 
   #[test]
@@ -147,24 +147,24 @@ mod test {
   #[test]
   fn mutation_when_110percent() {
     let gene = Gene::new();
-    assert!(gene.clone().mutate_gene(1.1f32).rna != gene.rna);  
+    assert!(gene.clone().mutate_gene(1.1f64).rna != gene.rna);  
   }
 
   #[test]
   fn no_mutation_when_0percent() {
     let gene = Gene::new();
-    assert_eq!(gene.clone().mutate_gene(-0.1f32).rna, gene.rna);  
+    assert_eq!(gene.clone().mutate_gene(-0.1f64).rna, gene.rna);  
   }
 
   #[test]
   fn mutation_rna_size_when_100percent() {
     let gene = Gene::new();
-    assert!(gene.clone().mutate_rna(1f32).rna.len() != gene.rna.len());  
+    assert!(gene.clone().mutate_rna(1f64).rna.len() != gene.rna.len());  
   }
 
   #[test]
   fn no_mutation_rna_size_when_0percent() {
     let gene = Gene::new();
-    assert_eq!(gene.clone().mutate_rna(-0.1f32).rna.len(), gene.rna.len());  
+    assert_eq!(gene.clone().mutate_rna(-0.1f64).rna.len(), gene.rna.len());  
   }
 }

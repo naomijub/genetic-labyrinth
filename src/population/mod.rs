@@ -1,5 +1,7 @@
 extern crate rand;
+extern crate rayon;
 
+use rayon::prelude::*;
 use rand::seq::SliceRandom;
 use super::genes::Gene;
 use super::directions::Point;
@@ -26,7 +28,7 @@ impl Population {
 
   pub fn mutate_pop(self) -> Self {
     let new_genes = self.genes.clone()
-      .into_iter()
+      .into_par_iter()
       .map(|g| g.mutate_gene(self.mutation_rate.clone()))
       .map(|g| g.mutate_rna(self.mutation_rate.clone()))
       .map(|g| g.fitness_evaluator(self.lab.clone(), self.entrance.clone()))

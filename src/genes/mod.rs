@@ -82,7 +82,7 @@ impl Gene {
     let exit_bonus = if has_found_exit { 10f64 } else { -5f64 };
     values.clone().into_iter()
       .map(|v| fitness_calculator(v))
-      .fold(0f64,|acc, v| acc + v) + exit_bonus - ((values.len() * 15usize) as f64).ln()
+      .fold(0f64,|acc, v| acc + v) + exit_bonus - (2f64 * (values.len() as f64).ln())
   }
 
 fn generate_genes_rna() -> Rna {

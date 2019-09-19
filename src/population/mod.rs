@@ -16,7 +16,7 @@ pub struct Population {
 
 impl Population {
   pub fn new(mutation_rate: f64, entrance: Point, lab: Vec<Vec<String>>) -> Self {
-    let genes = (0..20).map(|_| Gene::new().fitness_evaluator(lab.clone(), entrance.clone())).collect::<Vec<Gene>>();
+    let genes = (0..20).map(|_| Gene::new().fitness_evaluator(&lab, &entrance)).collect::<Vec<Gene>>();
     
     Population {
       genes: genes,
@@ -29,9 +29,9 @@ impl Population {
   pub fn mutate_pop(self) -> Self {
     let new_genes = self.genes.clone()
       .into_par_iter()
-      .map(|g| g.mutate_gene(self.mutation_rate.clone()))
-      .map(|g| g.mutate_rna(self.mutation_rate.clone()))
-      .map(|g| g.fitness_evaluator(self.lab.clone(), self.entrance.clone()))
+      .map(|g| g.mutate_gene(self.mutation_rate))
+      .map(|g| g.mutate_rna(self.mutation_rate))
+      .map(|g| g.fitness_evaluator(&self.lab, &self.entrance))
       .collect::<Vec<Gene>>();
 
     Self { genes: new_genes, mutation_rate: self.mutation_rate, entrance: self.entrance, lab: self.lab }
@@ -41,7 +41,7 @@ impl Population {
     let pop_genes = self.clone().genes;
     let genes = (0..20)
       .map(move |_| crossover_genes(select_best(&pop_genes), select_best(&pop_genes)))
-      .map(|g| g.fitness_evaluator(self.lab.clone(), self.entrance.clone()))
+      .map(|g| g.fitness_evaluator(&self.lab.clone(), &self.entrance.clone()))
       .collect::<Vec<Gene>>();
     
     Self { genes: genes, mutation_rate: self.mutation_rate, entrance: self.entrance, lab: self.lab }

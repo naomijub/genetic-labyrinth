@@ -17,6 +17,14 @@ impl Add for Point {
     }
 }
 
+impl<'b> Add<&'b Point> for Point {
+    type Output = Point;
+
+    fn add(self, other: &'b Point) -> Point {
+      Point {0: self.0 + other.0, 1: self.1 + other.1}
+    }
+}
+
 impl Point {
   pub fn from(x: i32, y: i32) -> Point {
     Point{0: x, 1: y}
@@ -68,14 +76,14 @@ pub fn direction_to_position(direction: &Directions) -> Point {
   }
 }
 
-pub fn movement(lab: Vec<Vec<String>>, entrance: Point, directions: Vec<Directions>) -> Vec<String> {
-  let init = entrance.clone();
+pub fn movement(lab: &Vec<Vec<String>>, entrance: &Point, directions: &Vec<Directions>) -> Vec<String> {
+  let init = entrance.to_owned();
   let empty_vec = Vec::new();
   let default = "-1".to_string();
   let movements = directions.iter()
     .map(|d| direction_to_position(d))
     .fold((init , vec![String::from("E")]), |mut acc, d| {
-      let next_pos = acc.0 + d;
+      let next_pos = acc.0 + &d;
       let next_value = lab.get(next_pos.1 as usize).unwrap_or(&empty_vec).get(next_pos.0 as usize).unwrap_or(&default);
       acc.1.push(next_value.to_string());
       (next_pos, acc.1)
@@ -121,7 +129,7 @@ mod test {
     let directions = vec![Directions::S];
     let expected = vec!["E", "1"];
 
-    let actual = movement(lab1, Point(0,0), directions);
+    let actual = movement(&lab1, &Point(0,0), &directions);
 
     assert_eq!(expected, actual);
   }
@@ -137,7 +145,7 @@ mod test {
     let directions = vec![Directions::S, Directions::E];
     let expected = vec!["E", "1", "0"];
 
-    let actual = movement(lab1, Point(0,0), directions);
+    let actual = movement(&lab1, &Point(0,0), &directions);
 
     assert_eq!(expected, actual);
   }
@@ -148,7 +156,7 @@ mod test {
     let directions = vec![Directions::S, Directions::W];
     let expected = vec!["E", "1", "-1"];
 
-    let actual = movement(lab1, Point(0,0), directions);
+    let actual = movement(&lab1, &Point(0,0), &directions);
 
     assert_eq!(expected, actual);
   }
@@ -159,7 +167,7 @@ mod test {
     let directions = vec![Directions::N, Directions::W];
     let expected = vec!["E", "-1", "-1"];
 
-    let actual = movement(lab1, Point(0,0), directions);
+    let actual = movement(&lab1, &Point(0,0), &directions);
 
     assert_eq!(expected, actual);
   }
@@ -170,7 +178,7 @@ mod test {
     let directions = vec![Directions::S, Directions::S, Directions::S, Directions::S, Directions::S, Directions::S, Directions::S];
     let expected = vec!["E", "1", "0", "0", "0", "1", "1", "S"];
 
-    let actual = movement(lab1, Point(0,0), directions);
+    let actual = movement(&lab1, &Point(0,0), &directions);
 
     assert_eq!(expected, actual);
   }
@@ -181,7 +189,7 @@ mod test {
     let directions = vec![Directions::E, Directions::S, Directions::S, Directions::E, Directions::E, Directions::S];
     let expected = vec!["E", "0", "0", "0", "0", "0", "0"];
 
-    let actual = movement(lab1, Point(0,0), directions);
+    let actual = movement(&lab1, &Point(0,0), &directions);
 
     assert_eq!(expected, actual);
   }

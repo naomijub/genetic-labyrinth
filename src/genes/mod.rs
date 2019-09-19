@@ -41,7 +41,7 @@ impl Gene {
     if mutation_rate > generated_percentile {
       self.rna.pop();
       self
-    } else if 1f64 - mutation_rate < generated_percentile {
+    } else if 2f64 * mutation_rate > generated_percentile && mutation_rate < generated_percentile {
       self.rna.push(random_direction());
       self
     } else {
@@ -80,7 +80,7 @@ impl Gene {
     let exit_bonus = if has_found_exit { 10f64 } else { -5f64 };
     values.clone().iter()
       .map(|v| fitness_calculator(v))
-      .fold(0f64,|acc, v| acc + v) + exit_bonus - 10f64.powi(values.len() as i32 - 10i32)
+      .fold(0f64,|acc, v| acc + v) + exit_bonus - 2f64.powi(values.len() as i32 - 12i32)
   }
 
 fn generate_genes_rna() -> Rna {

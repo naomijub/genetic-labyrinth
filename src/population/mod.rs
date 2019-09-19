@@ -1,5 +1,7 @@
 extern crate rand;
+extern crate rayon;
 
+use rayon::prelude::*;
 use rand::seq::SliceRandom;
 use super::genes::Gene;
 use super::directions::Point;
@@ -14,7 +16,7 @@ pub struct Population {
 
 impl Population {
   pub fn new(mutation_rate: f64, entrance: Point, lab: Vec<Vec<String>>) -> Self {
-    let genes = (0..20).map(|_| Gene::new().fitness_evaluator(lab.clone(), entrance.clone())).collect::<Vec<Gene>>();
+    let genes = (0..20).map(|_| Gene::new().fitness_evaluator(&lab, &entrance)).collect::<Vec<Gene>>();
     
     Population {
       genes: genes,
@@ -26,20 +28,20 @@ impl Population {
 
   pub fn mutate_pop(self) -> Self {
     let new_genes = self.genes.clone()
-      .into_iter()
-      .map(|g| g.mutate_gene(self.mutation_rate.clone()))
-      .map(|g| g.mutate_rna(self.mutation_rate.clone()))
-      .map(|g| g.fitness_evaluator(self.lab.clone(), self.entrance.clone()))
+      .into_par_iter()
+      .map(|g| g.mutate_gene(self.mutation_rate))
+      .map(|g| g.mutate_rna(self.mutation_rate))
+      .map(|g| g.fitness_evaluator(&self.lab, &self.entrance))
       .collect::<Vec<Gene>>();
 
     Self { genes: new_genes, mutation_rate: self.mutation_rate, entrance: self.entrance, lab: self.lab }
   }
 
   pub fn crossing_over(self) -> Self {
-    let pop_genes = self.clone().genes;
+    let pop_genes = &self.genes.clone();
     let genes = (0..20)
-      .map(move |_| crossover_genes(select_best(&pop_genes), select_best(&pop_genes)))
-      .map(|g| g.fitness_evaluator(self.lab.clone(), self.entrance.clone()))
+      .map(|_| crossover_genes(select_best(pop_genes), select_best(pop_genes)))
+      .map(|g| g.fitness_evaluator(&self.lab, &self.entrance))
       .collect::<Vec<Gene>>();
     
     Self { genes: genes, mutation_rate: self.mutation_rate, entrance: self.entrance, lab: self.lab }
@@ -48,8 +50,8 @@ impl Population {
 
 fn crossover_genes(gene1: Gene, gene2: Gene) -> Gene {
   if gene1 != gene2 {
-    let mut rna1 = gene1.clone().rna.split_at((gene1.clone().rna.len() as f64 / 2f64).ceil() as usize).0.to_vec();
-    let rna2 = gene2.clone().rna.split_at((gene2.rna.len() as f64 / 2f64).floor() as usize).1.to_vec();
+    let mut rna1 = gene1.rna.split_at((gene1.rna.len() as f64 / 2f64).ceil() as usize).0.to_vec();
+    let rna2 = gene2.rna.split_at((gene2.rna.len() as f64 / 2f64).floor() as usize).1.to_vec();
 
     rna1.extend(rna2);
 
@@ -72,7 +74,7 @@ fn select_best(genes: &Vec<Gene>) -> Gene {
 
 fn get_best(selected_genes: &Vec<&Gene>) -> Gene {
   selected_genes
-    .into_iter()
+    .iter()
     .max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap())
     .unwrap()
     .clone()
@@ -81,7 +83,7 @@ fn get_best(selected_genes: &Vec<&Gene>) -> Gene {
 
 pub fn best_gene(genes: &Vec<Gene>) -> Gene {
   genes
-    .into_iter()
+    .iter()
     .max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap())
     .unwrap()
     .clone()

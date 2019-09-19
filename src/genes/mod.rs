@@ -21,38 +21,36 @@ impl Gene {
     }
   }
 
-  pub fn mutate_gene(self, mutation_rate: f64) -> Self {
+  pub fn mutate_gene(mut self, mutation_rate: f64) -> Self {
     let mut rng = rand::thread_rng();
-    let rnd_index = rng.gen_range(0, self.rna.clone().len());
+    let rna_len = &self.rna.len();
+    let rnd_index = rng.gen_range(0, rna_len.to_owned());
     let generated_percentile = rng.gen_range(0f64, 1f64);
     if mutation_rate > generated_percentile {
-      let mut mut_rna = self.rna;
-      mut_rna.remove(rnd_index);
-      mut_rna.insert(rnd_index, random_direction());
-      Self{rna: mut_rna, fitness: 0f64}
+      self.rna.remove(rnd_index);
+      self.rna.insert(rnd_index, random_direction());
+      self
     } else {
       self
     }
   }
 
-  pub fn mutate_rna(self, mutation_rate: f64) -> Self {
+  pub fn mutate_rna(mut self, mutation_rate: f64) -> Self {
     let mut rng = rand::thread_rng();
     let generated_percentile = rng.gen_range(0f64, 1f64);
     if mutation_rate > generated_percentile {
-      let mut mut_rna = self.rna;
-      mut_rna.pop();
-      Self{rna: mut_rna, fitness: 0f64}
-    } else if 1f64 - mutation_rate < generated_percentile {
-      let mut mut_rna = self.rna;
-      mut_rna.push(random_direction());
-      Self{rna: mut_rna, fitness: 0f64}
+      self.rna.pop();
+      self
+    } else if 2f64 * mutation_rate > generated_percentile && mutation_rate < generated_percentile {
+      self.rna.push(random_direction());
+      self
     } else {
       self
     }
   }
 
-  pub fn fitness_evaluator(self, lab: Vec<Vec<String>>, entrance: Point) -> Self {
-    let path = movement(lab, entrance, self.rna.clone());
+  pub fn fitness_evaluator(self, lab: &Vec<Vec<String>>, entrance: &Point) -> Self {
+    let path = movement(lab, entrance, &self.rna);
     let values = path.iter()
       .map(|rna| match &rna[..] {
         "E" => 0,
@@ -72,17 +70,17 @@ impl Gene {
   }
 }
 
- fn fitness_calculator(value: i32) -> f64 {
-   let x = value as f64;
+ fn fitness_calculator(value: &i32) -> f64 {
+   let x = value.to_owned() as f64;
     4f64 * ((E.powf(x - 0.5f64) - 1f64)/(E.powf(x - 0.5f64) + 1f64) 
       * (E.powf(x + 0.5f64) - 1f64)/(E.powf(x + 0.5f64) + 1f64) * (-20f64)).tanh() - 3f64
   }
   
   fn fitness(values: Vec<i32>, has_found_exit: bool) -> f64 {
     let exit_bonus = if has_found_exit { 10f64 } else { -5f64 };
-    values.clone().into_iter()
+    values.clone().iter()
       .map(|v| fitness_calculator(v))
-      .fold(0f64,|acc, v| acc + v) + exit_bonus - ((values.len() * 15usize) as f64).ln()
+      .fold(0f64,|acc, v| acc + v) + exit_bonus - 2f64.powi(values.len() as i32 - 12i32)
   }
 
 fn generate_genes_rna() -> Rna {
@@ -111,15 +109,15 @@ mod test {
   #[test]
   fn evaluate_fitness_from_gene() {
     let gene = Gene {rna: vec![Directions::E, Directions::S, Directions::S] ,fitness: 0f64};
-    let actual = gene.fitness_evaluator(vec![vec!["E".to_string(), "0".to_string(), "1".to_string()], vec!["1".to_string(), "0".to_string(), "0".to_string()], vec!["1".to_string(), "S".to_string(), "1".to_string()]], Point::from(0i32, 0i32));
-    assert!(actual.fitness > 10f64);
+    let actual = gene.fitness_evaluator(&vec![vec!["E".to_string(), "0".to_string(), "1".to_string()], vec!["1".to_string(), "0".to_string(), "0".to_string()], vec!["1".to_string(), "S".to_string(), "1".to_string()]], &Point::from(0i32, 0i32));
+    assert!(actual.fitness >= 8f64);
   }
 
   #[test]
   fn test_fitness_value_spectrum() {
-    assert!(-3f64 > fitness_calculator(-1));
-    assert!(-3f64 > fitness_calculator(1));
-    assert!(0.5f64 < fitness_calculator(0));
+    assert!(-6f64 > fitness_calculator(&-1));
+    assert!(-6f64 > fitness_calculator(&1));
+    assert!(0f64 < fitness_calculator(&0));
   }
 
   #[test]
@@ -129,7 +127,7 @@ mod test {
 
   #[test]
   fn test_fitness_from_genes_with_exit() {
-    assert!(-10f64 < fitness(vec![-1, 1, 0, 0, 1, 1, 0], true));
+    assert!(-15f64 >= fitness(vec![-1, 1, 0, 0, 1, 1, 0], true));
   }
 
   #[test]

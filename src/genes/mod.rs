@@ -112,14 +112,14 @@ mod test {
   fn evaluate_fitness_from_gene() {
     let gene = Gene {rna: vec![Directions::E, Directions::S, Directions::S] ,fitness: 0f64};
     let actual = gene.fitness_evaluator(vec![vec!["E".to_string(), "0".to_string(), "1".to_string()], vec!["1".to_string(), "0".to_string(), "0".to_string()], vec!["1".to_string(), "S".to_string(), "1".to_string()]], Point::from(0i32, 0i32));
-    assert!(actual.fitness > 10f64);
+    assert!(actual.fitness >= 8f64);
   }
 
   #[test]
   fn test_fitness_value_spectrum() {
-    assert!(-3f64 > fitness_calculator(-1));
-    assert!(-3f64 > fitness_calculator(1));
-    assert!(0.5f64 < fitness_calculator(0));
+    assert!(-6f64 > fitness_calculator(-1));
+    assert!(-6f64 > fitness_calculator(1));
+    assert!(0f64 < fitness_calculator(0));
   }
 
   #[test]
@@ -129,7 +129,7 @@ mod test {
 
   #[test]
   fn test_fitness_from_genes_with_exit() {
-    assert!(-10f64 < fitness(vec![-1, 1, 0, 0, 1, 1, 0], true));
+    assert!(-20f64 <= fitness(vec![-1, 1, 0, 0, 1, 1, 0], true));
   }
 
   #[test]

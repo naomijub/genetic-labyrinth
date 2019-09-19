@@ -55,16 +55,16 @@ pub fn random_direction() -> Directions {
   dir
 }
 
-pub fn direction_to_position(direction: Directions) -> Point {
+pub fn direction_to_position(direction: &Directions) -> Point {
   match direction {
-    Directions::N => Point(0, -1),
-    Directions::S => Point(0, 1),
-    Directions::W => Point(-1, 0),
-    Directions::E => Point(1, 0),
-    Directions::NE => Point(1, -1),
-    Directions::NW => Point(-1, -1),
-    Directions::SE => Point(1, 1),
-    Directions::SW => Point(-1, 1)
+    &Directions::N => Point(0, -1),
+    &Directions::S => Point(0, 1),
+    &Directions::W => Point(-1, 0),
+    &Directions::E => Point(1, 0),
+    &Directions::NE => Point(1, -1),
+    &Directions::NW => Point(-1, -1),
+    &Directions::SE => Point(1, 1),
+    &Directions::SW => Point(-1, 1)
   }
 }
 
@@ -72,7 +72,7 @@ pub fn movement(lab: Vec<Vec<String>>, entrance: Point, directions: Vec<Directio
   let init = entrance.clone();
   let empty_vec = Vec::new();
   let default = "-1".to_string();
-  let movements = directions.into_iter()
+  let movements = directions.iter()
     .map(|d| direction_to_position(d))
     .fold((init , vec![String::from("E")]), |mut acc, d| {
       let next_pos = acc.0 + d;
@@ -105,14 +105,14 @@ mod test {
 
   #[test]
   fn maps_direction_to_position() {
-    assert_eq!(direction_to_position(Directions::N), Point(0, -1));
-    assert_eq!(direction_to_position(Directions::S), Point(0, 1));
-    assert_eq!(direction_to_position(Directions::W), Point(-1, 0));
-    assert_eq!(direction_to_position(Directions::E), Point(1, 0));
-    assert_eq!(direction_to_position(Directions::NE), Point(1, -1));
-    assert_eq!(direction_to_position(Directions::NW), Point(-1, -1));
-    assert_eq!(direction_to_position(Directions::SE), Point(1, 1));
-    assert_eq!(direction_to_position(Directions::SW), Point(-1, 1));
+    assert_eq!(direction_to_position(&Directions::N), Point(0, -1));
+    assert_eq!(direction_to_position(&Directions::S), Point(0, 1));
+    assert_eq!(direction_to_position(&Directions::W), Point(-1, 0));
+    assert_eq!(direction_to_position(&Directions::E), Point(1, 0));
+    assert_eq!(direction_to_position(&Directions::NE), Point(1, -1));
+    assert_eq!(direction_to_position(&Directions::NW), Point(-1, -1));
+    assert_eq!(direction_to_position(&Directions::SE), Point(1, 1));
+    assert_eq!(direction_to_position(&Directions::SW), Point(-1, 1));
   }
 
   #[test]
